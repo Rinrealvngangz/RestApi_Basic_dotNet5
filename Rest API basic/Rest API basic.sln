@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31402.337
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestAPI_Food", "RestAPI_Food\RestAPI_Food.csproj", "{79B312DA-5C9C-4D4E-9AF1-0F905FEFBF2E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{79B312DA-5C9C-4D4E-9AF1-0F905FEFBF2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79B312DA-5C9C-4D4E-9AF1-0F905FEFBF2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79B312DA-5C9C-4D4E-9AF1-0F905FEFBF2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79B312DA-5C9C-4D4E-9AF1-0F905FEFBF2E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E5459B3D-D44D-436F-B470-05F75287B22D}
+	EndGlobalSection
+EndGlobal
