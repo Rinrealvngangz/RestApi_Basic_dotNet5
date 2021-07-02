@@ -8,11 +8,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using RestAPI_Food.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using RestAPI_Food.configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Identity;
+
 namespace RestAPI_Food
 {
     public class Startup
@@ -27,13 +29,41 @@ namespace RestAPI_Food
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var key = Encoding.ASCII.GetBytes(Configuration["JwtConfig:Key"]);
+            var tokenParameterValidation = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey =true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                 ValidateIssuer = false,
+                 ValidateAudience =false,
+                 ValidateLifetime =true,
+                 RequireExpirationTime =false,
+
+            };
+            services.Configure<JwtConfig>(Configuration.GetSection("JwtConfig"));   
             services.AddDbContext<FoodDBContext>(options =>
                 options.UseSqlServer(
                   Configuration.GetConnectionString("DefaultConnection")
 
                   ));
-            
-          
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            }).AddJwtBearer(jwt => {
+
+                jwt.SaveToken = true;
+                jwt.TokenValidationParameters = tokenParameterValidation;
+
+
+            });
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                     .AddEntityFrameworkStores<FoodDBContext>();
+
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -55,6 +85,7 @@ namespace RestAPI_Food
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

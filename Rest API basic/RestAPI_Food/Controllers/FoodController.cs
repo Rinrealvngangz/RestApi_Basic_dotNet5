@@ -8,11 +8,13 @@ using RestAPI_Food.Data;
 using Microsoft.EntityFrameworkCore;
 using RestAPI_Food.Etites;
 using RestAPI_Food.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestAPI_Food.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class FoodController : ControllerBase
     {
         private readonly FoodDBContext _dbContext;
@@ -60,7 +62,7 @@ namespace RestAPI_Food.Controllers
            
             return NotFound(new ResponseDtos
             {
-                Status = StatusCodes.Status404NotFound,
+               
                 Success = false,
                 Errors = new List<string>()
                {
@@ -69,7 +71,50 @@ namespace RestAPI_Food.Controllers
             });
         }
 
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete(string id)
+        {
+            var existItem =  await _dbContext.Foods.FirstOrDefaultAsync(x => x.Id == Guid.Parse(id));
+              if(existItem == null)
+            {
+                return BadRequest(new ResponseDtos()
+                {
+                    Success = false,
+                    Errors = new List<string>()
+                    {
+                        $"Cannot find {id} in Food"
+                    }
+                });
+            }
 
+            _dbContext.Foods.Remove(existItem);
+            _dbContext.SaveChanges();
+            return NoContent();
+
+        }
+        [HttpPut("{id}")]
+        public async Task<ActionResult> Update(string id ,[FromBody] Food food)
+        {
+           var existItem = await _dbContext.Foods.FirstOrDefaultAsync(x => x.Id == Guid.Parse(id));
+            if(existItem == null)
+            {
+                return BadRequest(new ResponseDtos()
+                {
+                    Success = false,
+                    Errors = new List<string>()
+                    {
+                        $"Cannot find {id} in Food"
+                    }
+                });
+            }
+            existItem.Name = food.Name;
+            existItem.Price = food.Price;
+            existItem.CategoryId = food.CategoryId;
+            _dbContext.Foods.Update(existItem);
+            _dbContext.SaveChanges();
+            return NoContent();
+        }
+            
 
     }
 }
