@@ -14,7 +14,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using RestAPI_Food.Data;
-
+using Microsoft.EntityFrameworkCore;
 namespace RestAPI_Food.Controllers
 {
     [Route("api/[controller]")]
@@ -133,6 +133,40 @@ namespace RestAPI_Food.Controllers
             });
 
         }
+
+        [HttpPost]
+        [Route("refresh")]
+
+        public async Task<ActionResult> RefreshToken([FromBody] TokenRefresh tokenRefresh)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await VarifyGenerateToken(tokenRefresh);
+
+                if (result == null)
+                {
+                    return BadRequest(new ResponseDtos()
+                    {
+                        Errors = new List<string>() {
+                            "Invalid tokens"
+                        },
+                        Success = false
+                    });
+                }
+
+                return Ok(result);
+            }
+
+            return BadRequest(new ResponseDtos()
+            {
+                Errors = new List<string>() {
+                    "Invalid payload"
+                },
+                Success = false
+            });
+          
+        }
+
         private async Task<ResponseDtos> GenerateJwtToken(IdentityUser user)
         {
             var jwtSecurityToken =  new JwtSecurityTokenHandler();
@@ -173,6 +207,111 @@ namespace RestAPI_Food.Controllers
             };
         }
 
+        private async Task<ResponseDtos> VarifyGenerateToken([FromBody]TokenRefresh tokenRefresh)
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+            try
+            {
+                // Validatiton 1 JWT Format
+                var tokenValidation = jwtTokenHandler.ValidateToken(tokenRefresh.Token, _tokenValidationParameters, out var validatedToken);
+
+                // Validation 2 Validate encrytion alg
+                if(validatedToken is  JwtSecurityToken jwtSecurityToken)
+                {
+                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+                    if (result == false)
+                    {
+                        return null;
+                    }
+                }
+                // Validation 3 expiry date
+                var utcExpiryDate = long.Parse(tokenValidation.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+
+                var verifyDate = UnixTimeStampToDateTime(utcExpiryDate);
+
+                if (verifyDate > DateTime.UtcNow)
+                {
+                    return new ResponseDtos()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token has not yet expired"
+                        }
+                    };
+                }
+                // Validation 4 validate exist token 
+                var storedToken = await _foodDBContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenRefresh.RefreshToken);
+                if(storedToken == null)
+                {
+
+                    return new ResponseDtos()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token does not exist"
+                        }
+                    };
+                }
+
+                // Validation 5 - validate if used
+                if (storedToken.IsUsed)
+                {
+                    return new ResponseDtos()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token has been used"
+                        }
+                    };
+                }
+
+                // Validation 6 - validate if revoked
+                if (storedToken.IsRevorked)
+                {
+                    return new ResponseDtos()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token has been revoked"
+                        }
+                    };
+                }
+
+                // Validation 7 - validate the id
+                var jti = tokenValidation.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+                if (storedToken.JwtId != jti)
+                {
+                    return new ResponseDtos()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token doesn't match"
+                        }
+                    };
+                }
+
+                // update current token 
+
+                storedToken.IsUsed = true;
+                _foodDBContext.RefreshTokens.Update(storedToken);
+                await _foodDBContext.SaveChangesAsync();
+                // Generate a new token
+                var dbUser = await _userManager.FindByIdAsync(storedToken.UserId);
+                return await GenerateJwtToken(dbUser);
+            }
+            catch ( Exception er)
+            {
+                throw er;
+            }
+        }
+
+        private DateTime UnixTimeStampToDateTime(long unixTimeStamp)
+        {
+            var dateTimeVal = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dateTimeVal = dateTimeVal.AddSeconds(unixTimeStamp).ToUniversalTime();
+
+            return dateTimeVal;
+        }
         private string RandomString(int length)
         {
             var random = new Random();
