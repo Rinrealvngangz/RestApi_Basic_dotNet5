@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using RestAPI_Food.Data;
 
 namespace RestAPI_Food.Controllers
 {
@@ -22,11 +23,17 @@ namespace RestAPI_Food.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly JwtConfig _jwtConfig;
-        public AuthenManagerController(UserManager<IdentityUser> userManager, IOptionsMonitor<JwtConfig> optionsMonitor)
+        private readonly TokenValidationParameters _tokenValidationParameters;
+        private readonly FoodDBContext _foodDBContext;
+        public AuthenManagerController(UserManager<IdentityUser> userManager,
+                                      IOptionsMonitor<JwtConfig> optionsMonitor,
+                                      TokenValidationParameters tokenValidationParameters,
+                                      FoodDBContext foodDBContext )
         {
             _userManager = userManager;
             _jwtConfig = optionsMonitor.CurrentValue;
-
+            _tokenValidationParameters = tokenValidationParameters;
+            _foodDBContext = foodDBContext;
         }
 
         [HttpPost]
@@ -59,12 +66,8 @@ namespace RestAPI_Food.Controllers
                 var isCreated = await _userManager.CreateAsync(newUser, register.Password);
                 if (isCreated.Succeeded)
                 {
-                   var jwtToken = GenerateJwtToken(newUser);
-                    return Ok(new ResponseDtos()
-                    {
-                        Success = true,
-                        Token = jwtToken
-                    });
+                   var jwtToken = await GenerateJwtToken(newUser);
+                    return Ok(jwtToken);
                 }
             }
             return BadRequest(new ResponseDtos()
@@ -89,12 +92,8 @@ namespace RestAPI_Food.Controllers
 
                     if (isUser)
                     {
-                        var token = GenerateJwtToken(hasUser);
-                        return Ok(new ResponseDtos()
-                        {
-                            Success = true,
-                            Token = token
-                        });
+                        var token = await GenerateJwtToken(hasUser);
+                        return Ok(token);
                     }
                     return BadRequest(new ResponseDtos()
                     {
@@ -134,7 +133,7 @@ namespace RestAPI_Food.Controllers
             });
 
         }
-        private string GenerateJwtToken(IdentityUser user)
+        private async Task<ResponseDtos> GenerateJwtToken(IdentityUser user)
         {
             var jwtSecurityToken =  new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtConfig.Key);
@@ -148,13 +147,38 @@ namespace RestAPI_Food.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor()
             {
                 Subject = claim,
-                Expires = DateTime.UtcNow.AddHours(6),
+                Expires = DateTime.UtcNow.AddSeconds(30),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key) , SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = jwtSecurityToken.CreateToken(tokenDescriptor);
             var jwtToken = jwtSecurityToken.WriteToken(token);
-            return jwtToken;
+
+            var refreshToken = new RefreshToken()
+            {
+                JwtId = token.Id,
+                IsUsed = false,
+                IsRevorked = false,
+                UserId = user.Id,
+                AddedDate = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMonths(6),
+                Token = RandomString(35) + Guid.NewGuid()
+            };
+            await _foodDBContext.RefreshTokens.AddAsync(refreshToken);
+            await _foodDBContext.SaveChangesAsync();
+            return new ResponseDtos() {
+                Success = true,
+                Token = jwtToken,
+                RefreshToken = refreshToken.Token
+            };
+        }
+
+        private string RandomString(int length)
+        {
+            var random = new Random();
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(x => x[random.Next(x.Length)]).ToArray());
         }
     }
      

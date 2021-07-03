@@ -7,11 +7,15 @@ using System.Threading.Tasks;
 using RestAPI_Food.Data;
 using Microsoft.EntityFrameworkCore;
 using RestAPI_Food.Etites;
+using System.Text.Json;
+using RestAPI_Food.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestAPI_Food.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CategoryController : ControllerBase
     {
         FoodDBContext _dBContext;
@@ -22,8 +26,8 @@ namespace RestAPI_Food.Controllers
         [HttpGet]
         public async Task<ActionResult> GetCategorysAsync() 
         {
-              
-         
+              var items = await _dBContext.Categories.Include(x => x.Foods).ToListAsync();       
+            return Ok(JsonSerializer.Serialize(items.AsCategoryFoodDtos()));
         }
         [HttpGet("{id}")]
 

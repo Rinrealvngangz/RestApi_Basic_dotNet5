@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using RestAPI_Food.Etites;
 using RestAPI_Food.Dtos;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Net.Http.Headers;
 
 namespace RestAPI_Food.Controllers
 {
@@ -119,6 +120,7 @@ namespace RestAPI_Food.Controllers
         [Route("{id}/Category/{categoryId}")]
         public async Task<ActionResult> AddCategory(string id ,string categoryId)
         {
+         
             var existCategory = await _dbContext.Categories.FindAsync(Guid.Parse(categoryId));
             var existFood = await _dbContext.Foods.FirstOrDefaultAsync(x => x.Id == Guid.Parse(id));
             if (existCategory == null || existFood == null)

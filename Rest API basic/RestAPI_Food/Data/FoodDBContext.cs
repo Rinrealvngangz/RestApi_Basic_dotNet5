@@ -7,6 +7,7 @@ using RestAPI_Food.Etites;
 using RestAPI_Food.configuration;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
+using RestAPI_Food.Etities;
 
 namespace RestAPI_Food.Data
 {
@@ -26,5 +27,7 @@ namespace RestAPI_Food.Data
         public  DbSet<Food> Foods { get; set; }
 
         public  DbSet<Category> Categories { get; set; }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

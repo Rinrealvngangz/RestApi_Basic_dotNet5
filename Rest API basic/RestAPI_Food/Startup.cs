@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
+using System.Text.Json.Serialization;
 
 namespace RestAPI_Food
 {
@@ -63,12 +64,16 @@ namespace RestAPI_Food
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                      .AddEntityFrameworkStores<FoodDBContext>();
 
-
-            services.AddControllers();
+          
+            services.AddControllers().AddJsonOptions(x =>
+              x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "RestAPI_Food", Version = "v1" });
             });
+
+            services.AddSingleton(tokenParameterValidation);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

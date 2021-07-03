@@ -17,7 +17,7 @@ namespace RestAPI_Food.configuration
    
              builder.HasOne(f => f.Category)
                     .WithMany(c => c.Foods).HasForeignKey(c => c.CategoryId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

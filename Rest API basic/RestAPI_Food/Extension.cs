@@ -43,5 +43,23 @@ namespace RestAPI_Food
                
             };
         }
+        public static IEnumerable<CategoryFoodDtos> AsCategoryFoodDtos(this IEnumerable<Category> items)
+        {
+            List<CategoryFoodDtos> ListCategoryFoods = new List<CategoryFoodDtos>();
+            foreach (var cf in items)
+            {
+                List<FoodDtos> foodDtos = new List<FoodDtos>();
+                cf.Foods.ToList().ForEach(x => foodDtos.Add(x.AsFoodDtos()));
+                var categoryFoodDtos = new CategoryFoodDtos()
+                {
+                    Id = cf.CategoryId.ToString(),
+                    Name = cf.Name,
+                    foods = new List<FoodDtos>(foodDtos)
+
+                };
+                ListCategoryFoods.Add(categoryFoodDtos);
+            }
+            return ListCategoryFoods;
+        }
     }
 }
