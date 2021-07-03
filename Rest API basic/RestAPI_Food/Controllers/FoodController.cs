@@ -114,7 +114,40 @@ namespace RestAPI_Food.Controllers
             _dbContext.SaveChanges();
             return NoContent();
         }
-            
+
+        [HttpPost]
+        [Route("{id}/Category/{categoryId}")]
+        public async Task<ActionResult> AddCategory(string id ,string categoryId)
+        {
+            var existCategory = await _dbContext.Categories.FindAsync(Guid.Parse(categoryId));
+            var existFood = await _dbContext.Foods.FirstOrDefaultAsync(x => x.Id == Guid.Parse(id));
+            if (existCategory == null || existFood == null)
+            {
+                return NotFound();
+            }
+            existFood.CategoryId = existCategory.CategoryId;
+           
+            _dbContext.Foods.Update(existFood);
+            await _dbContext.SaveChangesAsync();
+            return NoContent();
+         
+        }
+
+        [HttpGet]
+        [Route("{id}/Category")]
+        public async Task<ActionResult> GetCategory(string id)
+        {
+            var existFood = await _dbContext.Foods.FirstOrDefaultAsync(x => x.Id == Guid.Parse(id));
+    
+            if (existFood == null)
+            {
+                return NotFound();
+            }
+          var category =  await _dbContext.Categories.FirstOrDefaultAsync(x => x.Foods.Contains(existFood));
+       
+            return Ok(category.AsCategoryDtos());
+
+        }
 
     }
 }

@@ -20,5 +20,28 @@ namespace RestAPI_Food
                 CategoryId = food.CategoryId
             };
         }
+
+        public static CategoryDtos AsCategoryDtos(this Category category)
+        {
+            if(category.Foods == null)
+            {
+                return new CategoryDtos()
+                {
+                    Id = category.CategoryId.ToString(),
+                    Name = category.Name,
+                    Foods = null
+
+                };
+            }
+            var foods = category.Foods.Select(x => x.AsFoodDtos()).ToList();
+            
+            return new CategoryDtos()
+            {
+                Id = category.CategoryId.ToString(),
+                Name = category.Name,
+                Foods = new List<FoodDtos>(foods)
+               
+            };
+        }
     }
 }

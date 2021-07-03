@@ -5873,11 +5873,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\18128\\source\\repos\\Rest API basic\\RestAPI_Food\\RestAPI_Food.csproj",
+      "projectUniqueName": "E:\\Dev\\RestApi_Basic_dotNet5\\Rest API basic\\RestAPI_Food\\RestAPI_Food.csproj",
       "projectName": "RestAPI_Food",
-      "projectPath": "C:\\Users\\18128\\source\\repos\\Rest API basic\\RestAPI_Food\\RestAPI_Food.csproj",
+      "projectPath": "E:\\Dev\\RestApi_Basic_dotNet5\\Rest API basic\\RestAPI_Food\\RestAPI_Food.csproj",
       "packagesPath": "C:\\Users\\18128\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\18128\\source\\repos\\Rest API basic\\RestAPI_Food\\obj\\",
+      "outputPath": "E:\\Dev\\RestApi_Basic_dotNet5\\Rest API basic\\RestAPI_Food\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
